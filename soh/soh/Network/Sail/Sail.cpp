@@ -374,6 +374,16 @@ void Sail::RegisterHooks() {
         sailSendScreen("game");
     });
 
+    // >>> dual-subtitle patch: forward the A-button action label id <<<
+    COND_HOOK(OnSetDoAction, isConnected, [&](uint16_t action) {
+        nlohmann::json payload;
+        payload["id"] = ShipUtils::Random(0, UINT32_MAX);
+        payload["type"] = "hook";
+        payload["hook"]["type"] = "OnSetDoAction";
+        payload["hook"]["action"] = action;
+        SendJsonToRemote(payload);
+    });
+
     COND_HOOK(OnTransitionEnd, isConnected, [&](int32_t sceneNum) {
         if (!GameInteractor::IsSaveLoaded())
             return;
