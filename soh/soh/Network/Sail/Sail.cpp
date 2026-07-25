@@ -336,6 +336,17 @@ std::unique_ptr<GameInteractionEffectBase> Sail::EffectFromJson(nlohmann::json p
 }
 
 void Sail::RegisterHooks() {
+    // >>> dual-subtitle patch: forward the current textbox id out over Sail <<<
+    COND_HOOK(OnOpenText, isConnected, [&](uint16_t* textId, bool* loadFromMessageTable) {
+        nlohmann::json payload;
+        payload["id"] = ShipUtils::Random(0, UINT32_MAX);
+        payload["type"] = "hook";
+        payload["hook"]["type"] = "OnOpenText";
+        payload["hook"]["textId"] = *textId;
+
+        SendJsonToRemote(payload);
+    });
+
     COND_HOOK(OnTransitionEnd, isConnected, [&](int32_t sceneNum) {
         if (!GameInteractor::IsSaveLoaded())
             return;
