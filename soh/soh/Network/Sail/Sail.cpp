@@ -347,6 +347,33 @@ void Sail::RegisterHooks() {
         SendJsonToRemote(payload);
     });
 
+    // >>> dual-subtitle patch: forward title/menu SCREEN changes (deduped) <<<
+    auto sailSendScreen = [&](const char* screen) {
+        static std::string sailLastScreen;
+        if (sailLastScreen == screen) {
+            return; // only emit when the screen actually changes
+        }
+        sailLastScreen = screen;
+        nlohmann::json payload;
+        payload["id"] = ShipUtils::Random(0, UINT32_MAX);
+        payload["type"] = "hook";
+        payload["hook"]["type"] = "OnScreen";
+        payload["hook"]["screen"] = screen;
+        SendJsonToRemote(payload);
+    };
+    COND_HOOK(OnZTitleInit, isConnected, [sailSendScreen](void* gameState) {
+        sailSendScreen("title");
+    });
+    COND_HOOK(OnPresentFileSelect, isConnected, [sailSendScreen]() {
+        sailSendScreen("fileselect");
+    });
+    COND_HOOK(OnKaleidoscopeUpdate, isConnected, [sailSendScreen](int16_t inDungeonScene) {
+        sailSendScreen("pause");
+    });
+    COND_HOOK(OnPlayerUpdate, isConnected, [sailSendScreen]() {
+        sailSendScreen("game");
+    });
+
     COND_HOOK(OnTransitionEnd, isConnected, [&](int32_t sceneNum) {
         if (!GameInteractor::IsSaveLoaded())
             return;
