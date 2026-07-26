@@ -6,6 +6,7 @@
 #include <spdlog/spdlog.h>
 #include "soh/ShipUtils.h"
 #include "soh/cvar_prefixes.h"
+extern "C" { extern int32_t gDualSubBox; }   // dual-subtitle mod: current textbox index
 
 template <class DstType, class SrcType> bool IsType(const SrcType* src) {
     return dynamic_cast<const DstType*>(src) != nullptr;
@@ -382,6 +383,21 @@ void Sail::RegisterHooks() {
         payload["hook"]["type"] = "OnSetDoAction";
         payload["hook"]["action"] = action;
         SendJsonToRemote(payload);
+    });
+
+    COND_HOOK(OnGameFrameUpdate, isConnected, [&]() {
+        static int32_t sailLastBox = -2;
+        if (gDualSubBox != sailLastBox) {
+            sailLastBox = gDualSubBox;
+            if (gDualSubBox >= 0) {
+                nlohmann::json payload;
+                payload["id"] = ShipUtils::Random(0, UINT32_MAX);
+                payload["type"] = "hook";
+                payload["hook"]["type"] = "OnTextBox";
+                payload["hook"]["box"] = gDualSubBox;
+                SendJsonToRemote(payload);
+            }
+        }
     });
 
     COND_HOOK(OnTransitionEnd, isConnected, [&](int32_t sceneNum) {
