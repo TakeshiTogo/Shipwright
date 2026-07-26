@@ -2708,6 +2708,8 @@ void FileChoose_DrawRandoSaveVersionWarning(GameState* thisx) {
     CLOSE_DISPS(this->state.gfxCtx);
 }
 
+s32 gDualSubFileMode = -1; // dual-subtitle mod: file-select sub-screen (-1 = not here)
+
 void FileChoose_Main(GameState* thisx) {
     static void* controlsTextures[] = {
         gFileSelControlsENGTex,
@@ -2721,6 +2723,18 @@ void FileChoose_Main(GameState* thisx) {
     Color_RGB8 helpTextColor = { 100, 255, 255 };
 
     GameInteractor_ExecuteOnFileChooseMain(thisx);
+    { // dual-subtitle mod: report the exact file-select sub-screen for the browser
+        switch (this->configMode) {
+            case CM_MAIN_MENU: gDualSubFileMode = (this->selectMode == SM_CONFIRM_FILE) ? 1 : 0; break;
+            case CM_SELECT_COPY_SOURCE: case CM_SELECT_COPY_DEST: gDualSubFileMode = 2; break;
+            case CM_COPY_CONFIRM: gDualSubFileMode = 3; break;
+            case CM_ERASE_SELECT: gDualSubFileMode = 4; break;
+            case CM_ERASE_CONFIRM: gDualSubFileMode = 5; break;
+            case CM_NAME_ENTRY: case CM_START_NAME_ENTRY: gDualSubFileMode = 6; break;
+            case CM_OPTIONS_MENU: case CM_START_OPTIONS: gDualSubFileMode = 7; break;
+            default: gDualSubFileMode = 0; break;
+        }
+    }
 
     if (CVarGetInteger(CVAR_COSMETIC("Title.FileChoose.Changed"), 0)) {
         Color_RGB8 backgroundColor =
