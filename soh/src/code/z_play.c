@@ -669,19 +669,21 @@ void Play_Init(GameState* thisx) {
     gPlayState->nextEntranceIndex = gSaveContext.entranceIndex;
 }
 
-s32 gDualSubBox = -1; // dual-subtitle mod: current textbox index (-1 = no message)
+s32 gDualSubBox = -1, gDualSubFreeze = 0, gDualSubTitle = 0, gDualSubDpad = 0; // dual-subtitle mod globals
 
 void Play_Update(PlayState* play) {
     Input* input = play->state.input;
     s32 isPaused;
     s32 pad1;
 
-    { // dual-subtitle mod: L-button freezes gameplay to study (rendering continues, press L again to resume)
-        static u8 sDualSubFreeze = 0;
-        if (CHECK_BTN_ALL(input[0].press.button, BTN_L)) {
-            sDualSubFreeze ^= 1;
-        }
-        if (sDualSubFreeze) {
+    { // dual-subtitle mod: title-screen detect + L-freeze + d-pad control (runs before the freeze early-return)
+        gDualSubTitle = (gSaveContext.gameMode == GAMEMODE_TITLE_SCREEN) ? 1 : 0;
+        if (CHECK_BTN_ALL(input[0].press.button, BTN_L)) gDualSubFreeze ^= 1;
+        if (CHECK_BTN_ALL(input[0].press.button, BTN_DUP)) gDualSubDpad = 1;
+        else if (CHECK_BTN_ALL(input[0].press.button, BTN_DDOWN)) gDualSubDpad = 2;
+        else if (CHECK_BTN_ALL(input[0].press.button, BTN_DLEFT)) gDualSubDpad = 3;
+        else if (CHECK_BTN_ALL(input[0].press.button, BTN_DRIGHT)) gDualSubDpad = 4;
+        if (gDualSubFreeze) {
             return;
         }
     }
