@@ -2724,6 +2724,7 @@ void FileChoose_Main(GameState* thisx) {
 
     GameInteractor_ExecuteOnFileChooseMain(thisx);
     { // dual-subtitle mod: report the exact file-select sub-screen for the browser
+        extern s32 gDualSubTitle; gDualSubTitle = -1; // not on the Play title-screen while in file-choose
         switch (this->configMode) {
             case CM_MAIN_MENU: gDualSubFileMode = (this->selectMode == SM_CONFIRM_FILE) ? 1 : 0; break;
             case CM_SELECT_COPY_SOURCE: case CM_SELECT_COPY_DEST: gDualSubFileMode = 2; break;
