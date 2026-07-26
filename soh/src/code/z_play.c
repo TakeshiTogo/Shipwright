@@ -674,6 +674,16 @@ void Play_Update(PlayState* play) {
     s32 isPaused;
     s32 pad1;
 
+    { // dual-subtitle mod: L-button freezes gameplay to study (rendering continues, press L again to resume)
+        static u8 sDualSubFreeze = 0;
+        if (CHECK_BTN_ALL(input[0].press.button, BTN_L)) {
+            sDualSubFreeze ^= 1;
+        }
+        if (sDualSubFreeze) {
+            return;
+        }
+    }
+
     if ((SREG(1) < 0) || (DREG(0) != 0)) {
         SREG(1) = 0;
         ZeldaArena_Display();
