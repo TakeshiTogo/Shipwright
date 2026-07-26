@@ -697,6 +697,7 @@ void Play_Update(PlayState* play) {
             gDualSubBox = -1;
         }
     }
+    { extern s32 gDualSubFileMode; gDualSubFileMode = -1; } // dual-subs: not on file-select while playing
 
     if ((SREG(1) < 0) || (DREG(0) != 0)) {
         SREG(1) = 0;
