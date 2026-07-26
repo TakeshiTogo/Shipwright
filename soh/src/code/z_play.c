@@ -669,6 +669,8 @@ void Play_Init(GameState* thisx) {
     gPlayState->nextEntranceIndex = gSaveContext.entranceIndex;
 }
 
+s32 gDualSubBox = -1; // dual-subtitle mod: current textbox index (-1 = no message)
+
 void Play_Update(PlayState* play) {
     Input* input = play->state.input;
     s32 isPaused;
@@ -681,6 +683,18 @@ void Play_Update(PlayState* play) {
         }
         if (sDualSubFreeze) {
             return;
+        }
+    }
+    { // dual-subtitle mod: current textbox index (box-breaks drawn) so the browser can page-sync
+        MessageContext* dsMsg = &play->msgCtx;
+        if (dsMsg->msgMode != 0) {
+            s32 dsBox = 0; s32 dsI;
+            for (dsI = 0; dsI < dsMsg->textDrawPos; dsI++) {
+                if (dsMsg->msgBufDecodedWide[dsI] == 0x81A5) dsBox++;
+            }
+            gDualSubBox = dsBox;
+        } else {
+            gDualSubBox = -1;
         }
     }
 
