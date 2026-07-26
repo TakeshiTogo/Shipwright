@@ -7,6 +7,7 @@
 #include "soh/ShipUtils.h"
 #include "soh/cvar_prefixes.h"
 extern "C" { extern int32_t gDualSubBox; }   // dual-subtitle mod: current textbox index
+extern "C" { extern int32_t gDualSubFileMode; }   // dual-subtitle mod: file-select sub-screen
 
 template <class DstType, class SrcType> bool IsType(const SrcType* src) {
     return dynamic_cast<const DstType*>(src) != nullptr;
@@ -365,9 +366,6 @@ void Sail::RegisterHooks() {
     COND_HOOK(OnZTitleInit, isConnected, [sailSendScreen](void* gameState) {
         sailSendScreen("title");
     });
-    COND_HOOK(OnPresentFileSelect, isConnected, [sailSendScreen]() {
-        sailSendScreen("fileselect");
-    });
     COND_HOOK(OnKaleidoscopeUpdate, isConnected, [sailSendScreen](int16_t inDungeonScene) {
         sailSendScreen("pause");
     });
@@ -396,6 +394,18 @@ void Sail::RegisterHooks() {
                 payload["hook"]["type"] = "OnTextBox";
                 payload["hook"]["box"] = gDualSubBox;
                 SendJsonToRemote(payload);
+            }
+        }
+        static int32_t sailLastFs = -2;
+        if (gDualSubFileMode != sailLastFs) {
+            sailLastFs = gDualSubFileMode;
+            if (gDualSubFileMode >= 0) {
+                nlohmann::json fp;
+                fp["id"] = ShipUtils::Random(0, UINT32_MAX);
+                fp["type"] = "hook";
+                fp["hook"]["type"] = "OnFileScreen";
+                fp["hook"]["code"] = gDualSubFileMode;
+                SendJsonToRemote(fp);
             }
         }
     });
