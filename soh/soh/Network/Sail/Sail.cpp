@@ -8,6 +8,7 @@
 #include "soh/cvar_prefixes.h"
 extern "C" { extern int32_t gDualSubBox; }   // dual-subtitle mod: current textbox index
 extern "C" { extern int32_t gDualSubFileMode; }   // dual-subtitle mod: file-select sub-screen
+extern "C" { extern int32_t gDualSubFreeze, gDualSubTitle, gDualSubDpad; }   // dual-subtitle mod: freeze / title / d-pad
 
 template <class DstType, class SrcType> bool IsType(const SrcType* src) {
     return dynamic_cast<const DstType*>(src) != nullptr;
@@ -369,10 +370,6 @@ void Sail::RegisterHooks() {
     COND_HOOK(OnKaleidoscopeUpdate, isConnected, [sailSendScreen](int16_t inDungeonScene) {
         sailSendScreen("pause");
     });
-    COND_HOOK(OnPlayerUpdate, isConnected, [sailSendScreen]() {
-        sailSendScreen("game");
-    });
-
     // >>> dual-subtitle patch: forward the A-button action label id <<<
     COND_HOOK(OnSetDoAction, isConnected, [&](uint16_t action) {
         nlohmann::json payload;
@@ -407,6 +404,32 @@ void Sail::RegisterHooks() {
                 fp["hook"]["code"] = gDualSubFileMode;
                 SendJsonToRemote(fp);
             }
+        }
+        static int32_t sailLastPlay = -2;   // title vs game (gDualSubTitle: 1=title,0=game,-1=not in play)
+        if (gDualSubTitle != sailLastPlay) {
+            sailLastPlay = gDualSubTitle;
+            if (gDualSubTitle >= 0) {
+                nlohmann::json pp;
+                pp["id"] = ShipUtils::Random(0, UINT32_MAX);
+                pp["type"] = "hook"; pp["hook"]["type"] = "OnScreen";
+                pp["hook"]["screen"] = (gDualSubTitle == 1) ? "title" : "game";
+                SendJsonToRemote(pp);
+            }
+        }
+        static int32_t sailLastFreeze = -1;
+        if (gDualSubFreeze != sailLastFreeze) {
+            sailLastFreeze = gDualSubFreeze;
+            nlohmann::json ff;
+            ff["id"] = ShipUtils::Random(0, UINT32_MAX);
+            ff["type"] = "hook"; ff["hook"]["type"] = "OnFreeze"; ff["hook"]["frozen"] = gDualSubFreeze;
+            SendJsonToRemote(ff);
+        }
+        if (gDualSubDpad != 0) {
+            nlohmann::json dp;
+            dp["id"] = ShipUtils::Random(0, UINT32_MAX);
+            dp["type"] = "hook"; dp["hook"]["type"] = "OnDpad"; dp["hook"]["dir"] = gDualSubDpad;
+            SendJsonToRemote(dp);
+            gDualSubDpad = 0;
         }
     });
 
